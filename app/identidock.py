@@ -1,8 +1,9 @@
 import hashlib
+import html
 
+import redis
 import requests
 from flask import Flask, Response, request
-import redis
 
 app = Flask(__name__)
 cache = redis.StrictRedis(host='redis', port=6379, db=0)
@@ -15,7 +16,7 @@ def main_page():
     name = default_name
 
     if request.method == 'POST':
-        name = request.form['name']
+        name = html.escape(request.form['name'], quote=True)
 
     saled_name = salt + name
     name_hash = hashlib.sha256(saled_name.encode()).hexdigest()
@@ -35,6 +36,7 @@ def main_page():
 
 @app.route('/monster/<name>')
 def get_identicon(name):
+    name = html.escape(name, quote=True)
     image = cache.get(name)
 
     if image is None:
